@@ -312,6 +312,36 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
         $stmt->bindParam(':replacement_subscription_id', $replacementSubscriptionId, SQLITE3_INTEGER);
 
         if ($stmt->execute()) {
+            // Get subscription ID for tag assignment
+            $subscriptionId = $isEdit ? $id : $db->lastInsertRowID();
+            
+            // Handle tag assignments
+            if (isset($_POST['tags']) && is_array($_POST['tags'])) {
+                // First, remove all existing tag assignments for this subscription
+                $deleteTagsSql = "DELETE FROM subscription_tags WHERE subscription_id = :subscriptionId";
+                $deleteStmt = $db->prepare($deleteTagsSql);
+                $deleteStmt->bindValue(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
+                $deleteStmt->execute();
+                
+                // Then add new tag assignments
+                foreach ($_POST['tags'] as $tagId) {
+                    $tagId = intval($tagId);
+                    if ($tagId > 0) {
+                        $tagSql = "INSERT INTO subscription_tags (subscription_id, tag_id, created_at) VALUES (:subscriptionId, :tagId, datetime('now'))";
+                        $tagStmt = $db->prepare($tagSql);
+                        $tagStmt->bindValue(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
+                        $tagStmt->bindValue(':tagId', $tagId, SQLITE3_INTEGER);
+                        $tagStmt->execute();
+                    }
+                }
+            } elseif ($isEdit) {
+                // If editing and no tags selected, remove all tag assignments
+                $deleteTagsSql = "DELETE FROM subscription_tags WHERE subscription_id = :subscriptionId";
+                $deleteStmt = $db->prepare($deleteTagsSql);
+                $deleteStmt->bindValue(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
+                $deleteStmt->execute();
+            }
+            
             $success['status'] = "Success";
             $text = $isEdit ? "updated" : "added";
             $success['message'] = translate('subscription_' . $text . '_successfuly', $i18n);

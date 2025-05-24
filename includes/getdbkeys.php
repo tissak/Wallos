@@ -56,4 +56,21 @@
         $frequencies[$i] = array('id' => $i, 'name' => $i);
     }
 
+    $tags = array();
+    // Check if tags table exists before querying
+    $tableQuery = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'");
+    $tagsTableExists = $tableQuery->fetchArray(SQLITE3_ASSOC) !== false;
+    
+    if ($tagsTableExists) {
+        $query = "SELECT * FROM tags WHERE user_id = :userId ORDER BY name ASC";
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $tagId = $row['id'];
+            $tags[$tagId] = $row;
+            $tags[$tagId]['count'] = 0;
+        }
+    }
+
 ?>

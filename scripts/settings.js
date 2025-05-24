@@ -877,13 +877,216 @@ function saveCategorySorting() {
 }
 
 var el = document.getElementById('categories');
-var sortable = Sortable.create(el, {
-  handle: '.drag-icon',
-  ghostClass: 'sortable-ghost',
-  delay: 500,
-  delayOnTouchOnly: true,
-  touchStartThreshold: 5,
-  onEnd: function (evt) {
-    saveCategorySorting();
-  },
-});
+if (el) {
+  var sortable = Sortable.create(el, {
+    handle: '.drag-icon',
+    ghostClass: 'sortable-ghost',
+    delay: 500,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 5,
+    onEnd: function (evt) {
+      saveCategorySorting();
+    },
+  });
+}
+
+// Tag Management Functions
+function addTag() {
+  const button = document.getElementById("addTag");
+  const nameInput = document.getElementById("tag-name");
+  const colorInput = document.getElementById("tag-color");
+  
+  const name = nameInput.value.trim();
+  const color = colorInput.value;
+  
+  if (name === "") {
+    alert("Please enter a tag name");
+    return;
+  }
+  
+  button.disabled = true;
+  
+  const data = {
+    action: 'create',
+    name: name,
+    color: color
+  };
+  
+  fetch('endpoints/tags/tag.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      nameInput.value = "";
+      colorInput.value = "#007bff";
+      refreshTagsList();
+    } else {
+      alert('Error adding tag: ' + (data.message || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error adding tag');
+  })
+  .finally(() => {
+    button.disabled = false;
+  });
+}
+
+let currentEditingTagId = null;
+
+function editTag(tagId, currentName, currentColor) {
+  // Hide the add form and show the edit form
+  document.getElementById('tag-name').parentElement.style.display = 'none';
+  document.getElementById('tag-edit-form').style.display = 'block';
+  
+  // Populate the edit form
+  document.getElementById('edit-tag-name').value = currentName;
+  document.getElementById('edit-tag-color').value = currentColor;
+  
+  // Store the tag ID being edited
+  currentEditingTagId = tagId;
+  
+  // Focus on the name input
+  document.getElementById('edit-tag-name').focus();
+}
+
+function saveTagEdit() {
+  const nameInput = document.getElementById('edit-tag-name');
+  const colorInput = document.getElementById('edit-tag-color');
+  const button = document.getElementById('saveTagEdit');
+  
+  const name = nameInput.value.trim();
+  const color = colorInput.value;
+  
+  if (name === "") {
+    alert("Please enter a tag name");
+    return;
+  }
+  
+  if (!currentEditingTagId) {
+    alert("No tag selected for editing");
+    return;
+  }
+  
+  button.disabled = true;
+  
+  const data = {
+    action: 'update',
+    id: currentEditingTagId,
+    name: name,
+    color: color
+  };
+  
+  fetch('endpoints/tags/tag.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      cancelTagEdit();
+      refreshTagsList();
+    } else {
+      alert('Error updating tag: ' + (data.message || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error updating tag');
+  })
+  .finally(() => {
+    button.disabled = false;
+  });
+}
+
+function cancelTagEdit() {
+  // Hide the edit form and show the add form
+  document.getElementById('tag-edit-form').style.display = 'none';
+  document.getElementById('tag-name').parentElement.style.display = 'block';
+  
+  // Clear the edit form
+  document.getElementById('edit-tag-name').value = '';
+  document.getElementById('edit-tag-color').value = '#007bff';
+  
+  // Clear the editing tag ID
+  currentEditingTagId = null;
+}
+
+function deleteTag(tagId) {
+  if (!confirm("Are you sure you want to delete this tag? This will remove it from all subscriptions.")) {
+    return;
+  }
+  
+  const data = {
+    action: 'delete',
+    id: tagId
+  };
+  
+  fetch('endpoints/tags/tag.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      refreshTagsList();
+    } else {
+      alert('Error deleting tag: ' + (data.message || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error deleting tag');
+  });
+}
+
+function refreshTagsList() {
+  fetch('api/tags/get_tags.php')
+  .then(response => response.json())
+  .then(tags => {
+    const tagsList = document.getElementById('tags-list');
+    tagsList.innerHTML = '';
+    
+    tags.forEach(tag => {
+      const tagItem = document.createElement('div');
+      tagItem.className = 'tag-item';
+      tagItem.setAttribute('data-tag-id', tag.id);
+      
+      tagItem.innerHTML = `
+        <span class="tag-color" style="background-color: ${tag.color}"></span>
+        <span class="tag-name">${escapeHtml(tag.name)}</span>
+        <div class="tag-actions">
+          <button class="edit-tag" onclick="editTag(${tag.id}, '${escapeHtml(tag.name)}', '${tag.color}')">
+            <i class="fa-solid fa-edit"></i>
+          </button>
+          <button class="delete-tag" onclick="deleteTag(${tag.id})">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `;
+      
+      tagsList.appendChild(tagItem);
+    });
+  })
+  .catch(error => {
+    console.error('Error refreshing tags list:', error);
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}

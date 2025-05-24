@@ -34,6 +34,24 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
             $subscriptionData['cancellation_date'] = $row['cancellation_date'];
             $subscriptionData['replacement_subscription_id'] = $row['replacement_subscription_id'];
 
+            // Load tags for this subscription (only if tables exist)
+            $tableQuery = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'");
+            $tagsTableExists = $tableQuery->fetchArray(SQLITE3_ASSOC) !== false;
+            $subscriptionData['tags'] = [];
+            
+            if ($tagsTableExists) {
+                $tagQuery = "SELECT t.* FROM tags t 
+                             JOIN subscription_tags st ON t.id = st.tag_id 
+                             WHERE st.subscription_id = :subscriptionId 
+                             ORDER BY t.name ASC";
+                $tagStmt = $db->prepare($tagQuery);
+                $tagStmt->bindValue(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
+                $tagResult = $tagStmt->execute();
+                while ($tagRow = $tagResult->fetchArray(SQLITE3_ASSOC)) {
+                    $subscriptionData['tags'][] = $tagRow;
+                }
+            }
+
             $subscriptionJson = json_encode($subscriptionData);
             header('Content-Type: application/json');
             echo $subscriptionJson;

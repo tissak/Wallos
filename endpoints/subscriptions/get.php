@@ -92,6 +92,19 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $params[':auto_renew'] = $_GET['renewalType'];
   }
 
+  if (isset($_GET['tags']) && $_GET['tags'] != "") {
+    $allTags = explode(',', $_GET['tags']);
+    $placeholders = array_map(function ($idx) {
+      return ":tags{$idx}";
+    }, array_keys($allTags));
+
+    $sql .= " AND id IN (SELECT subscription_id FROM subscription_tags WHERE tag_id IN (" . implode(',', $placeholders) . "))";
+
+    foreach ($allTags as $idx => $tag) {
+      $params[":tags{$idx}"] = $tag;
+    }
+  }
+
   if (isset($_COOKIE['sortOrder']) && $_COOKIE['sortOrder'] != "") {
     $sort = $_COOKIE['sortOrder'];
   }
@@ -191,6 +204,24 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     if (isset($settings['showOriginalPrice']) && $settings['showOriginalPrice'] === 'true') {
       $print[$id]['original_price'] = floatval($subscription['price']);
       $print[$id]['original_currency_code'] = $currencies[$subscription['currency_id']]['code'];
+    }
+
+    // Load tags for this subscription (only if tables exist)
+    $tableQuery = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'");
+    $tagsTableExists = $tableQuery->fetchArray(SQLITE3_ASSOC) !== false;
+    $print[$id]['tags'] = [];
+    
+    if ($tagsTableExists) {
+      $tagQuery = "SELECT t.* FROM tags t 
+                   JOIN subscription_tags st ON t.id = st.tag_id 
+                   WHERE st.subscription_id = :subscriptionId 
+                   ORDER BY t.name ASC";
+      $tagStmt = $db->prepare($tagQuery);
+      $tagStmt->bindValue(':subscriptionId', $id, SQLITE3_INTEGER);
+      $tagResult = $tagStmt->execute();
+      while ($tagRow = $tagResult->fetchArray(SQLITE3_ASSOC)) {
+        $print[$id]['tags'][] = $tagRow;
+      }
     }
   }
 

@@ -326,6 +326,19 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                                 rel="noreferrer"><?php include $imagePath . "images/siteicons/svg/web.php"; ?></a></span>
                         <?php
                     }
+                    
+                    // Display tags for this subscription
+                    if (!empty($subscription['tags'])) {
+                        ?>
+                        <span class="tags" title="<?= translate('tags', $i18n) ?>">
+                            <?php foreach ($subscription['tags'] as $tag) { ?>
+                                <span class="subscription-tag" style="background-color: <?= htmlspecialchars($tag['color']) ?>">
+                                    <?= htmlspecialchars($tag['name']) ?>
+                                </span>
+                            <?php } ?>
+                        </span>
+                        <?php
+                    }
                     ?>
                 </div>
                 <?php

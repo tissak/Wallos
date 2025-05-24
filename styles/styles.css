@@ -710,6 +710,160 @@ button.mobile-action-renew {
   display: flex;
 }
 
+.subscription-tags {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 5px;
+}
+
+.subscription.is-open .subscription-tags {
+  display: flex;
+}
+
+.subscription-tag {
+  display: inline-block;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.tag-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Tag Management Styles */
+.tags-management .form-group-inline input[type="color"] {
+  width: 50px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.tags-list {
+  margin-top: 20px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.tag-item:last-child {
+  border-bottom: none;
+}
+
+.tag-item .tag-name {
+  flex: 1;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.tag-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.tag-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.tag-actions button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.edit-tag:hover {
+  color: #007bff;
+}
+
+.delete-tag:hover {
+  color: #dc3545;
+}
+
+.subscription-secondary .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.subscription-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  margin: 0 2px;
+}
+
+/* Tag Selector Styles */
+.tags-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.tag-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.tag-checkbox:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.tag-checkbox input[type="checkbox"] {
+  margin: 0 6px 0 0;
+  transform: scale(0.9);
+}
+
+.tag-checkbox .tag-color {
+  margin-right: 6px;
+}
+
+.tag-checkbox .tag-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tag-checkbox input[type="checkbox"]:checked + .tag-color + .tag-label {
+  font-weight: 600;
+}
+
+.tag-checkbox:has(input[type="checkbox"]:checked) {
+  border-color: #007bff;
+  background-color: #e7f3ff;
+}
+
 .subscription-secondary img,
 .subscription-notes img {
   height: 20px;

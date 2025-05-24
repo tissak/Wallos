@@ -122,6 +122,21 @@ function fillEditFormFields(subscription) {
     replacementSubscription.classList.add("hide");
   }
 
+  // Handle tags selection
+  const tagInputs = document.querySelectorAll('input[name="tags[]"]');
+  tagInputs.forEach(input => {
+    input.checked = false; // Clear all checkboxes first
+  });
+  
+  if (subscription.tags && subscription.tags.length > 0) {
+    subscription.tags.forEach(tag => {
+      const tagInput = document.querySelector(`input[name="tags[]"][value="${tag.id}"]`);
+      if (tagInput) {
+        tagInput.checked = true;
+      }
+    });
+  }
+
   const deleteButton = document.querySelector("#deletesub");
   deleteButton.style = 'display: block';
   deleteButton.setAttribute("onClick", `deleteSubscription(event, ${subscription.id})`);
@@ -360,6 +375,9 @@ function fetchSubscriptions(id, event, initiator) {
   }
   if (activeFilters['renewalType'] !== "") {
     getSubscriptions += getSubscriptions.includes("?") ? `&renewalType=${activeFilters['renewalType']}` : `?renewalType=${activeFilters['renewalType']}`;
+  }
+  if (activeFilters['tags'].length > 0) {
+    getSubscriptions += getSubscriptions.includes("?") ? `&tags=${activeFilters['tags']}` : `?tags=${activeFilters['tags']}`;
   }
 
   fetch(getSubscriptions)
@@ -602,6 +620,7 @@ const activeFilters = [];
 activeFilters['categories'] = [];
 activeFilters['members'] = [];
 activeFilters['payments'] = [];
+activeFilters['tags'] = [];
 activeFilters['state'] = "";
 activeFilters['renewalType'] = "";
 
@@ -709,11 +728,21 @@ document.querySelectorAll('.filter-item').forEach(function (item) {
         });
         this.classList.add('selected');
       }
+    } else if (this.hasAttribute('data-tagid')) {
+      const tagId = this.getAttribute('data-tagid');
+      if (activeFilters['tags'].includes(tagId)) {
+        const tagIndex = activeFilters['tags'].indexOf(tagId);
+        activeFilters['tags'].splice(tagIndex, 1);
+        this.classList.remove('selected');
+      } else {
+        activeFilters['tags'].push(tagId);
+        this.classList.add('selected');
+      }
     }
 
     if (activeFilters['categories'].length > 0 || activeFilters['members'].length > 0 ||
-       activeFilters['payments'].length > 0 || activeFilters['state'] !== "" || 
-       activeFilters['renewalType'] !== "") {
+       activeFilters['payments'].length > 0 || activeFilters['tags'].length > 0 || 
+       activeFilters['state'] !== "" || activeFilters['renewalType'] !== "") {
       document.querySelector('#clear-filters').classList.remove('hide');
     } else {
       document.querySelector('#clear-filters').classList.add('hide');
@@ -729,6 +758,7 @@ function clearFilters() {
   activeFilters['categories'] = [];
   activeFilters['members'] = [];
   activeFilters['payments'] = [];
+  activeFilters['tags'] = [];
   activeFilters['state'] = "";
   activeFilters['renewalType'] = "";
   

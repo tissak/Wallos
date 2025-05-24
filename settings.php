@@ -1229,6 +1229,67 @@ $userData['currency_symbol'] = $currencies[$main_currency]['symbol'];
         </div>
     </section>
 
+    <section class="account-section">
+        <header>
+            <h2><?= translate('tags', $i18n) ?></h2>
+        </header>
+        <div class="tags-management">
+            <div class="form-group">
+                <div class="form-group-inline">
+                    <input type="text" id="tag-name" name="tag-name" placeholder="<?= translate('tag_name', $i18n) ?>" maxlength="50">
+                    <input type="color" id="tag-color" name="tag-color" value="#007bff">
+                    <input type="submit" value="<?= translate('add', $i18n) ?>" id="addTag" onClick="addTag()" class="thin" />
+                </div>
+            </div>
+            
+            <!-- Hidden edit form -->
+            <div class="form-group" id="tag-edit-form" style="display: none;">
+                <div class="form-group-inline">
+                    <input type="text" id="edit-tag-name" name="edit-tag-name" placeholder="<?= translate('tag_name', $i18n) ?>" maxlength="50">
+                    <input type="color" id="edit-tag-color" name="edit-tag-color" value="#007bff">
+                    <input type="submit" value="<?= translate('save', $i18n) ?>" id="saveTagEdit" onclick="saveTagEdit()" class="thin" />
+                    <input type="button" value="<?= translate('cancel', $i18n) ?>" onclick="cancelTagEdit()" class="thin" />
+                </div>
+            </div>
+            <div class="tags-list" id="tags-list">
+                <?php
+                // Check if tags table exists before querying
+                $tableQuery = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'");
+                $tagsTableExists = $tableQuery->fetchArray(SQLITE3_ASSOC) !== false;
+                
+                if ($tagsTableExists) {
+                    $sql = "SELECT * FROM tags WHERE user_id = :userId ORDER BY name ASC";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
+                    $result = $stmt->execute();
+                    
+                    while ($tag = $result->fetchArray(SQLITE3_ASSOC)) {
+                    ?>
+                    <div class="tag-item" data-tag-id="<?= $tag['id'] ?>">
+                        <span class="tag-color" style="background-color: <?= htmlspecialchars($tag['color']) ?>"></span>
+                        <span class="tag-name"><?= htmlspecialchars($tag['name']) ?></span>
+                        <div class="tag-actions">
+                            <button class="edit-tag" onclick="editTag(<?= $tag['id'] ?>, '<?= htmlspecialchars($tag['name']) ?>', '<?= htmlspecialchars($tag['color']) ?>')">
+                                <i class="fa-solid fa-edit"></i>
+                            </button>
+                            <button class="delete-tag" onclick="deleteTag(<?= $tag['id'] ?>)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <?php
+                    }
+                }
+                ?>
+            </div>
+            <div class="settings-notes">
+                <p>
+                    <i class="fa-solid fa-circle-info"></i> <?= translate('tags_info', $i18n) ?>
+                </p>
+            </div>
+        </div>
+    </section>
+
 </section>
 <script src="scripts/settings.js?<?= $version ?>"></script>
 <script src="scripts/theme.js?<?= $version ?>"></script>

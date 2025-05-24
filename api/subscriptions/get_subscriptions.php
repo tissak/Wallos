@@ -246,6 +246,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
         $params[':inactive'] = $_REQUEST['state'];
     }
 
+    if (isset($_REQUEST['tag'])) {
+        $tagIds = explode(',', $_REQUEST['tag']);
+        $placeholders = array_map(function ($key) {
+            return ":tag{$key}";
+        }, array_keys($tagIds));
+
+        $sql .= " AND id IN (SELECT subscription_id FROM subscription_tags WHERE tag_id IN (" . implode(',', $placeholders) . "))";
+
+        foreach ($tagIds as $key => $tagId) {
+            $params[":tag{$key}"] = $tagId;
+        }
+    }
+
     $orderByClauses = [];
 
     if (isset($_REQUEST['disabled_to_bottom']) && $_REQUEST['disabled_to_bottom'] === 'true') {

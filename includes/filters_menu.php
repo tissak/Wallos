@@ -104,6 +104,37 @@
     <?php
   }
   ?>
+  <?php
+  if (count($tags) > 0) {
+    ?>
+    <div class="filtermenu-submenu">
+      <div class="filter-title" onClick="toggleSubMenu('tag')"><?= translate("tags", $i18n) ?></div>
+      <div class="filtermenu-submenu-content" id="filter-tag">
+        <?php
+        foreach ($tags as $tag) {
+          if ($tag['count'] == 0) {
+            continue;
+          }
+          $selectedClass = '';
+          if (isset($_GET['tag'])) {
+            $tagIds = explode(',', $_GET['tag']);
+            if (in_array($tag['id'], $tagIds)) {
+              $selectedClass = 'selected';
+            }
+          }
+          ?>
+          <div class="filter-item <?= $selectedClass ?>" data-tagid="<?= $tag['id'] ?>">
+            <span class="tag-color" style="background-color: <?= htmlspecialchars($tag['color']) ?>"></span>
+            <?= htmlspecialchars($tag['name']) ?>
+          </div>
+          <?php
+        }
+        ?>
+      </div>
+    </div>
+    <?php
+  }
+  ?>
 
   <div class="filtermenu-submenu">
     <div class="filter-title" onClick="toggleSubMenu('renewal_type')"><?= translate("renewal_type", $i18n) ?></div>

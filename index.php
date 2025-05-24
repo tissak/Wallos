@@ -84,6 +84,19 @@ if (!isset($settings['hideDisabledSubscriptions']) || $settings['hideDisabledSub
   }
 }
 
+if (isset($_GET['tag'])) {
+  $tagIds = explode(',', $_GET['tag']);
+  $placeholders = array_map(function ($key) {
+    return ":tag{$key}";
+  }, array_keys($tagIds));
+
+  $sql .= " AND id IN (SELECT subscription_id FROM subscription_tags WHERE tag_id IN (" . implode(',', $placeholders) . "))";
+
+  foreach ($tagIds as $key => $tagId) {
+    $params[":tag{$key}"] = $tagId;
+  }
+}
+
 $orderByClauses = [];
 
 if ($settings['disabledToBottom'] === 'true') {
@@ -131,6 +144,20 @@ foreach ($subscriptions as $subscription) {
   $categories[$categoryId]['count']++;
   $paymentMethodId = $subscription['payment_method_id'];
   $payment_methods[$paymentMethodId]['count']++;
+  
+  // Count tags for this subscription (only if tables exist)
+  if (!empty($tags)) {
+    $tagQuery = "SELECT tag_id FROM subscription_tags WHERE subscription_id = :subscriptionId";
+    $tagStmt = $db->prepare($tagQuery);
+    $tagStmt->bindValue(':subscriptionId', $subscription['id'], SQLITE3_INTEGER);
+    $tagResult = $tagStmt->execute();
+    while ($tagRow = $tagResult->fetchArray(SQLITE3_ASSOC)) {
+      $tagId = $tagRow['tag_id'];
+      if (isset($tags[$tagId])) {
+        $tags[$tagId]['count']++;
+      }
+    }
+  }
 }
 
 if ($sortOrder == "category_id") {
@@ -263,6 +290,24 @@ $headerClass = count($subscriptions) > 0 ? "main-actions" : "main-actions hidden
       if (isset($settings['showOriginalPrice']) && $settings['showOriginalPrice'] === 'true') {
         $print[$id]['original_price'] = floatval($subscription['price']);
         $print[$id]['original_currency_code'] = $currencies[$subscription['currency_id']]['code'];
+      }
+
+      // Load tags for this subscription (only if tables exist)
+      $tableQuery = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'");
+      $tagsTableExists = $tableQuery->fetchArray(SQLITE3_ASSOC) !== false;
+      $print[$id]['tags'] = [];
+      
+      if ($tagsTableExists) {
+        $tagQuery = "SELECT t.* FROM tags t 
+                     JOIN subscription_tags st ON t.id = st.tag_id 
+                     WHERE st.subscription_id = :subscriptionId 
+                     ORDER BY t.name ASC";
+        $tagStmt = $db->prepare($tagQuery);
+        $tagStmt->bindValue(':subscriptionId', $id, SQLITE3_INTEGER);
+        $tagResult = $tagStmt->execute();
+        while ($tagRow = $tagResult->fetchArray(SQLITE3_ASSOC)) {
+          $print[$id]['tags'][] = $tagRow;
+        }
       }
     }
 
@@ -475,6 +520,23 @@ $headerClass = count($subscriptions) > 0 ? "main-actions" : "main-actions hidden
 
     <div class="form-group">
       <input type="text" id="notes" name="notes" placeholder="<?= translate('notes', $i18n) ?>">
+    </div>
+
+    <div class="form-group">
+      <label for="tags"><?= translate('tags', $i18n) ?></label>
+      <div class="tags-selector" id="tags-selector">
+        <?php
+        foreach ($tags as $tag) {
+          ?>
+          <label class="tag-checkbox">
+            <input type="checkbox" name="tags[]" value="<?= $tag['id'] ?>" class="tag-input">
+            <span class="tag-color" style="background-color: <?= htmlspecialchars($tag['color']) ?>"></span>
+            <span class="tag-label"><?= htmlspecialchars($tag['name']) ?></span>
+          </label>
+          <?php
+        }
+        ?>
+      </div>
     </div>
 
     <div class="form-group">
